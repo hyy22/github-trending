@@ -4,7 +4,7 @@
 
 ```shell
 # 打包镜像
-docker build -t . github-trending
+docker build -t github-trending .
 # 运行镜像
 docker run -d \
   --name github-trending \
