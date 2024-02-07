@@ -1,6 +1,8 @@
 # github热榜归档
 
-## 运行
+> 将每日的github热榜归档到本地，并使用docker部署。
+
+## 运行 BUILD & RUN
 
 ```shell
 # 打包镜像
@@ -16,3 +18,7 @@ docker run -d \
   -e MAX_RETRY=10 \
   github-trending
 ```
+
+## 截图 Snapshot
+
+![1.png](./screenshot/1.png)
