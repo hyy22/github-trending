@@ -88,7 +88,7 @@ if __name__ == "__main__":
     thread = threading.Thread(target=start_server)
     thread.start()
     # 每两小时执行一次
-    schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task)
+    schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task).run()
     while True:
         schedule.run_pending()
         time.sleep(1)
