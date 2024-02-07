@@ -7,6 +7,7 @@ import os
 from string import Template
 import http.server
 import socketserver
+import threading
 
 # 同步间隔小时
 EXEC_PER_HOUR = int(os.getenv("EXEC_PER_HOUR", 1))
@@ -83,9 +84,11 @@ def start_server():
 
 # 任务调度
 if __name__ == "__main__":
-    start_server()
+    # 启动静态服务
+    thread = threading.Thread(target=start_server)
+    thread.start()
     # 每两小时执行一次
     schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task)
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        time.sleep(1)
