@@ -5,6 +5,8 @@ from datetime import datetime
 import json
 import os
 from string import Template
+import http.server
+import socketserver
 
 # 同步间隔小时
 EXEC_PER_HOUR = int(os.getenv("EXEC_PER_HOUR", 1))
@@ -65,8 +67,23 @@ def render():
             fw.write(Template(data).safe_substitute(date_div_list=''.join(date_div_list)))
 
 
+# 开启静态服务
+class StaticServer(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory="./dist", **kwargs)
+
+
+def start_server():
+    handler = http.server.SimpleHTTPRequestHandler
+    handler.directory = './dist'
+    with socketserver.TCPServer(("", 80), StaticServer) as httpd:
+        print("静态服务已开启")
+        httpd.serve_forever()
+
+
 # 任务调度
 if __name__ == "__main__":
+    start_server()
     # 每两小时执行一次
     schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task)
     while True:
