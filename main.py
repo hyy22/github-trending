@@ -4,9 +4,10 @@ from requests_html import HTMLSession, HTML
 from datetime import datetime
 import json
 import os
+from string import Template
 
-# 执行时间
-EXEC_TIME = os.getenv("EXEC_TIME", "08:00")
+# 同步间隔小时
+EXEC_PER_HOUR = int(os.getenv("EXEC_PER_HOUR", 1))
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
 
@@ -33,11 +34,13 @@ def task():
             "fork": fork,
         })
     # 写入文件
-    path = f"./trending/{datetime.now().strftime(format='%Y-%m-%d')}.json"
+    path = f"./dist/trending/{datetime.now().strftime(format='%Y-%m-%d')}.json"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(json.dumps(projects, ensure_ascii=False))
     print(f"写入成功：{path}")
+    # 生成网页
+    render()
 
 
 # 重试
@@ -51,10 +54,21 @@ def retry(func, n=10):
     print("重试次数已用完，任务失败")
 
 
+# 渲染页面
+def render():
+    with open("./template.html", "r", encoding="utf-8") as f:
+        data = f.read()
+        with open("./dist/index.html", "w", encoding="utf-8") as fw:
+            # 日期渲染列表
+            date_list = sorted([date.split('.')[0] for date in os.listdir("./dist/trending")], key=lambda x: datetime.strptime(x, '%Y-%m-%d'), reverse=True)
+            date_div_list = [f'<div class="item">{date}</div>' for date in date_list]
+            fw.write(Template(data).safe_substitute(date_div_list=''.join(date_div_list)))
+
+
 # 任务调度
 if __name__ == "__main__":
-    # 每天执行一次
-    schedule.every().day.at(EXEC_TIME).do(retry, n=MAX_RETRY, func=task)
+    # 每两小时执行一次
+    schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task)
     while True:
         schedule.run_pending()
         time.sleep(60)

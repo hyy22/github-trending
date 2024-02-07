@@ -1,2 +1,3 @@
-/trending/
 /.venv/
+/.idea/
+dist/

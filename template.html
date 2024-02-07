@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover" />
+    <title>github热榜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            font-family: "Apple LiSung", "-apple-system", Arial, sans-serif;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            height: 100vh;
+            display: flex;
+        }
+        .sider {
+            flex: none;
+            width: 100px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            left: 0;
+        }
+        .sider .item {
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #f2f2f2;
+            cursor: pointer;
+        }
+        .sider .item:hover, .sider .item.active {
+            background-color: #f2f2f2;
+        }
+        .main {
+            flex: auto;
+            min-width: 0;
+            padding: 0 20px;
+            overflow-y: auto;
+        }
+        .main .item {
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 14px;
+        }
+        .main .item .title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .main .item .desc {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .main .item .tool {
+            display: flex;
+            font-size: 14px;
+            color: #999;
+        }
+        .main .item .tool p {
+            margin-right: 10px;
+        }
+        .main .item .tool span {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sider">
+            ${date_div_list}
+        </div>
+        <div class="main">加载中...</div>
+    </div>
+    <script>
+        const siderItems = document.querySelectorAll('.sider .item');
+        // 选择日期
+        function onClickDate(item) {
+            siderItems.forEach(v => v.classList.remove('active'))
+            item.classList.add('active');
+            const date = item.textContent;
+            renderProjectListByDate(date);
+        }
+        onClickDate(siderItems[0])
+        // 绑定事件
+        const sider = document.querySelector('.sider')
+        sider.addEventListener('click', function(e) {
+            if (e.target.classList.contains('item')){
+               onClickDate(e.target)
+            }
+        })
+        // 渲染项目列表
+        async function renderProjectListByDate(date) {
+            const resp = await fetch(`./trending/${date}.json`).then(res => res.json())
+            const main = document.querySelector('.main');
+            main.innerHTML = resp.map(v => `
+<div class="item">
+    <div class="title">
+        <a target="_blank" href="https://github.com${v.link}">${v.title}</a>
+    </div>
+    <div class="desc">${v.desc}</div>
+    <div class="tool">
+        <p>star:<span>${v.star}</span></p>
+        <p>fork:<span>${v.fork}</span></p>
+    </div>
+</div>`).join('\n');
+            main.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>
