@@ -9,8 +9,8 @@ import http.server
 import socketserver
 import threading
 
-# 同步间隔小时
-EXEC_PER_HOUR = int(os.getenv("EXEC_PER_HOUR", 1))
+# 每天几点执行
+EXEC_TIME = int(os.getenv("EXEC_TIME", "08:00"))
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
 
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     # 启动静态服务
     thread = threading.Thread(target=start_server)
     thread.start()
-    # 每两小时执行一次
-    schedule.every(EXEC_PER_HOUR).hours.do(retry, n=MAX_RETRY, func=task).run()
+    # 每天几点执行
+    schedule.every().day.at(EXEC_TIME).do(retry, n=MAX_RETRY, func=task).run()
     while True:
         schedule.run_pending()
         time.sleep(1)
