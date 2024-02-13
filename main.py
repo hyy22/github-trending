@@ -10,7 +10,7 @@ import socketserver
 import threading
 
 # 每天几点执行
-EXEC_TIME = int(os.getenv("EXEC_TIME", "08:00"))
+EXEC_TIME = os.getenv("EXEC_TIME", "08:00")
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
 
