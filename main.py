@@ -11,13 +11,24 @@ from fastapi.responses import HTMLResponse, StreamingResponse, Response
 from pydantic import BaseModel
 from typing import Union
 import threading
+from contextlib import asynccontextmanager
 
 # 每天几点执行
 EXEC_TIME = os.getenv("EXEC_TIME", "08:00")
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = threading.Thread(target=run_schedule)
+    thread.start()
+    yield
+    schedule.clear()
+
+
 # app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 # 静态资源
 app.mount("/trending", StaticFiles(directory="dist/trending"), name="trending")
 
@@ -132,14 +143,3 @@ def run_schedule():
     while True:
         schedule.run_pending()
         time.sleep(1)
-
-
-@app.on_event("startup")
-async def startup_event():
-    thread = threading.Thread(target=run_schedule)
-    thread.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    schedule.clear()
