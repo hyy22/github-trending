@@ -128,7 +128,7 @@ def render():
 
 # 任务调度
 def run_schedule():
-    schedule.every(3).minutes.do(retry, n=MAX_RETRY, func=task).run()
+    schedule.every().day.at(EXEC_TIME).do(retry, n=MAX_RETRY, func=task).run()
     while True:
         schedule.run_pending()
         time.sleep(1)
