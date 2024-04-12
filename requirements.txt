@@ -1,2 +1,5 @@
 requests-html==0.10.0
 schedule~=1.2.1
+fastapi==0.110.1
+uvicorn==0.29.0
+pydantic~=2.7.0

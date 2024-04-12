@@ -13,7 +13,7 @@
             display: none;
         }
         body {
-            font-family: "Apple LiSung", "-apple-system", Arial, sans-serif;
+            font-family: "-apple-system", Arial, sans-serif;
         }
         a {
             text-decoration: none;
@@ -51,30 +51,117 @@
             padding: 0 20px;
             overflow-y: auto;
         }
-        .main .item {
+        .trending-item {
             padding: 20px 0;
             border-bottom: 1px solid #f1f1f1;
             font-size: 14px;
         }
-        .main .item .title {
+        .trending-item .title {
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .main .item .desc {
+        .trending-item .desc {
             color: #666;
             margin-bottom: 10px;
         }
-        .main .item .tool {
+        .trending-item .tool {
             display: flex;
             font-size: 14px;
             color: #999;
         }
-        .main .item .tool p {
+        .trending-item .tool p {
             margin-right: 10px;
         }
-        .main .item .tool span {
+        .trending-item .tool span {
             color: #666;
+        }
+        .search {
+            --size: 60px;
+            --color: #333;
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+        }
+        .search .icon {
+            width: calc(var(--size) - 35px);
+            height: calc(var(--size) - 35px);
+        }
+        .search-modal__mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            filter: blur(10px);
+        }
+        .search-modal {
+            position: fixed;
+            width: 80%;
+            background: #fff;
+            border-radius: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .search-modal__header {
+            height: 50px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            position: relative;
+        }
+        .search-modal__header .icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 20px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .search-modal__content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .search-modal__input {
+            --h: 45px;
+            position: sticky;
+            top: 0;
+            left: 0;
+            background: #fff;
+            height: 45px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .search-modal__input input {
+            width: 100%;
+            height: calc(var(--h) - 6px);
+            border: none;
+            user-select: none;
+            outline: none;
+        }
+        .search-modal__list--empty {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -84,6 +171,26 @@
             ${date_div_list}
         </div>
         <div class="main">加载中...</div>
+        <!-- 搜索按钮 -->
+        <div class="search">
+            <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4410" id="mx_n_1712904972310" width="200" height="200"><path d="M922.5 872.3L713 662.8c112-136.2 104.4-337.7-22.9-464.9C622.5 130.2 533.7 96.3 445 96.3s-177.4 33.9-245 101.6C64.6 333.2 64.6 552.7 200 688c67.7 67.7 156.4 101.5 245.1 101.5 78.1 0 156.1-26.2 219.9-78.6l209.5 209.5c6.6 6.6 15.3 10 24 10s17.4-3.3 24-10c13.3-13.3 13.3-34.8 0-48.1zM445 721.5c-36.2 0-71.5-6.9-104.9-20.4-34.5-14-65.5-34.6-92.1-61.2-26.6-26.6-47.2-57.6-61.2-92.1-13.5-33.4-20.4-68.7-20.4-104.9s6.9-71.5 20.4-104.9c14-34.5 34.6-65.5 61.2-92.1 26.6-26.6 57.6-47.2 92.1-61.2 33.4-13.5 68.7-20.4 104.9-20.4s71.5 6.9 104.9 20.4c34.5 14 65.5 34.6 92.1 61.2 26.6 26.6 47.2 57.6 61.2 92.1 13.5 33.4 20.4 68.7 20.4 104.9s-6.9 71.5-20.4 104.9c-14 34.5-34.6 65.5-61.2 92.1-26.6 26.6-57.6 47.2-92.1 61.2-33.4 13.6-68.6 20.4-104.9 20.4z" fill="#666666" p-id="4411"></path></svg>
+        </div>
+        <!-- 搜索结果弹窗 -->
+        <div id="search-modal" style="display: none">
+            <div class="search-modal__mask"></div>
+            <div class="search-modal">
+                <div class="search-modal__header">
+                    <div>搜索结果</div>
+                    <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5337" width="200" height="200"><path d="M481.834667 512L155.584 185.749333a21.333333 21.333333 0 0 1 30.165333-30.165333L512 481.834667 838.250667 155.584a21.333333 21.333333 0 0 1 30.165333 30.165333L542.165333 512l326.250667 326.250667a21.333333 21.333333 0 0 1-30.165333 30.165333L512 542.165333 185.749333 868.416a21.333333 21.333333 0 1 1-30.165333-30.165333L481.834667 512z" fill="#3D3D3D" p-id="5338"></path></svg>
+                </div>
+                <div class="search-modal__content">
+                    <div class="search-modal__input">
+                        <input id="search-input" type="text" placeholder="请输入关键词..." />
+                    </div>
+                    <div class="search-modal__list"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         const siderItems = document.querySelectorAll('.sider .item');
@@ -103,25 +210,78 @@
             }
         })
         // 渲染项目列表
+        function renderItem(item) {
+            return `<div class="trending-item">
+    <div class="title">
+        <a target="_blank" href="https://github.com${item.link}">${item.title}</a>
+    </div>
+    <div class="desc">${item.desc}</div>
+    <div class="tool">
+        <p>star:<span>${item.star}</span></p>
+        <p>fork:<span>${item.fork}</span></p>
+    </div>
+</div>`;
+        }
+        function renderEmpty() {
+            return `<div class="search-modal__list--empty">暂无数据</div>`;
+        }
         async function renderProjectListByDate(date) {
             const resp = await fetch(`./trending/${date}.json`).then(res => res.json())
             const main = document.querySelector('.main');
-            main.innerHTML = resp.map(v => `
-<div class="item">
-    <div class="title">
-        <a target="_blank" href="https://github.com${v.link}">${v.title}</a>
-    </div>
-    <div class="desc">${v.desc}</div>
-    <div class="tool">
-        <p>star:<span>${v.star}</span></p>
-        <p>fork:<span>${v.fork}</span></p>
-    </div>
-</div>`).join('\n');
+            main.innerHTML = resp.map(v => renderItem(v)).join('\n');
             main.scrollTo({
                 top: 0,
                 behavior: 'smooth'
             });
         }
+        // 防抖
+        function debounce(fn, delay = 200) {
+            let timer = null;
+            return function (...args) {
+                clearTimeout(timer);
+                timer = setTimeout(fn.bind(this, ...args), delay);
+            }
+        }
+        // 查询
+        function search(keyword) {
+            if (!keyword.trim()) return;
+            const sse = new EventSource(`/search?keyword=${keyword}`);
+            const listNode = document.querySelector('.search-modal__list');
+            let hasData = false;
+            sse.addEventListener('data', (e) => {
+                if (!hasData) {
+                    listNode.innerHTML = renderItem(JSON.parse(e.data));
+                    hasData = true;
+                }
+                else {
+                    listNode.innerHTML += renderItem(JSON.parse(e.data));
+                }
+            })
+            sse.addEventListener('done', () => {
+                if (!hasData) {
+                    listNode.innerHTML = renderEmpty();
+                }
+                sse.close()
+            })
+        }
+        const debounceSearch = debounce(search, 500);
+        const input = document.querySelector('.search-modal__input');
+        const searchBtn = document.querySelector('.search');
+        const searchModal = document.querySelector('#search-modal');
+        const searchModalCloseBtn = document.querySelector('.search-modal__header .icon');
+        input.addEventListener('input', e => {
+            const value = e.target.value;
+            debounceSearch(value);
+        })
+        searchBtn.addEventListener('click', e => {
+            searchModal.style.display = 'block';
+            setTimeout(() => {
+                input.focus();
+            }, 500);
+        })
+        searchModalCloseBtn.addEventListener('click', e => {
+            searchModal.style.display = 'none';
+        })
     </script>
 </body>
 </html>

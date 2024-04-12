@@ -5,14 +5,71 @@ from datetime import datetime
 import json
 import os
 from string import Template
-import http.server
-import socketserver
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, StreamingResponse, Response
+from pydantic import BaseModel
+from typing import Union
 import threading
 
 # 每天几点执行
 EXEC_TIME = os.getenv("EXEC_TIME", "08:00")
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
+# app
+app = FastAPI()
+# 静态资源
+app.mount("/trending", StaticFiles(directory="dist/trending"), name="trending")
+
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    return HTMLResponse(content=open("dist/index.html").read(), status_code=200)
+
+
+class TrendingItem(BaseModel):
+    title: str
+    link: str
+    desc: str
+    star: str
+    fork: str
+
+
+def mapping_text(item: TrendingItem, keyword: str) -> Union[TrendingItem, None]:
+    if item["title"] and keyword in item["title"]:
+        return item
+    if item["desc"] and keyword in item["desc"]:
+        return item
+    return None
+
+
+def generate_result(keyword: str):
+    if keyword == "" or keyword is None:
+        yield "event:done\n\n"
+    title_set: set[str] = set()
+    target_dir = "dist/trending"
+    files = os.listdir(target_dir)
+    for file in files:
+        with open(f"{target_dir}/{file}", "r", encoding="utf-8") as f:
+            data = json.load(f)
+            for item in data:
+                if item["title"] in title_set:
+                    continue
+                title_set.add(item["title"])
+                if mapping_text(item, keyword):
+                    yield f"event:data\n"
+                    yield f"data:{json.dumps(item)}\n\n"
+    yield "event:done\n"
+    yield "data:\n\n"
+
+
+@app.get("/search")
+def search(keyword: str, response: Response):
+    # 设置响应头
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+    response.headers["Connection"] = "keep-alive"
+    return StreamingResponse(generate_result(keyword), media_type="text/event-stream")
 
 
 def task():
@@ -63,32 +120,26 @@ def render():
         data = f.read()
         with open("./dist/index.html", "w", encoding="utf-8") as fw:
             # 日期渲染列表
-            date_list = sorted([date.split('.')[0] for date in os.listdir("./dist/trending")], key=lambda x: datetime.strptime(x, '%Y-%m-%d'), reverse=True)
+            date_list = sorted([date.split('.')[0] for date in os.listdir("./dist/trending")],
+                               key=lambda x: datetime.strptime(x, '%Y-%m-%d'), reverse=True)
             date_div_list = [f'<div class="item">{date}</div>' for date in date_list]
             fw.write(Template(data).safe_substitute(date_div_list=''.join(date_div_list)))
 
 
-# 开启静态服务
-class StaticServer(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory="./dist", **kwargs)
-
-
-def start_server():
-    handler = http.server.SimpleHTTPRequestHandler
-    handler.directory = './dist'
-    with socketserver.TCPServer(("", 80), StaticServer) as httpd:
-        print("静态服务已开启")
-        httpd.serve_forever()
-
-
 # 任务调度
-if __name__ == "__main__":
-    # 启动静态服务
-    thread = threading.Thread(target=start_server)
-    thread.start()
-    # 每天几点执行
-    schedule.every().day.at(EXEC_TIME).do(retry, n=MAX_RETRY, func=task).run()
+def run_schedule():
+    schedule.every(3).minutes.do(retry, n=MAX_RETRY, func=task).run()
     while True:
         schedule.run_pending()
         time.sleep(1)
+
+
+@app.on_event("startup")
+async def startup_event():
+    thread = threading.Thread(target=run_schedule)
+    thread.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    schedule.clear()
