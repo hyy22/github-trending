@@ -39,7 +39,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            border-bottom: 1px solid #f2f2f2;
+            border-bottom: 1px solid #f9f9f9;
             cursor: pointer;
         }
         .sider .item:hover, .sider .item.active {
@@ -53,7 +53,7 @@
         }
         .trending-item {
             padding: 20px 0;
-            border-bottom: 1px solid #f1f1f1;
+            border-bottom: 1px solid #f9f9f9;
             font-size: 14px;
         }
         .trending-item .title {
@@ -72,9 +72,14 @@
         }
         .trending-item .tool p {
             margin-right: 10px;
-        }
-        .trending-item .tool span {
+            display: flex;
+            align-items: center;
             color: #666;
+        }
+        .trending-item .tool .icon {
+            --size: 18px;
+            width: var(--size);
+            height: var(--size);
         }
         .search {
             --size: 60px;
@@ -155,6 +160,12 @@
             user-select: none;
             outline: none;
         }
+        .search-modal__input svg {
+            --size: 18px;
+            width: var(--size);
+            height: var(--size);
+            box-sizing: border-box;
+        }
         .search-modal__list--empty {
             height: 120px;
             display: flex;
@@ -186,6 +197,7 @@
                 <div class="search-modal__content">
                     <div class="search-modal__input">
                         <input id="search-input" type="text" placeholder="请输入关键词..." />
+                        <svg style="display: none" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="M481.834667 512L155.584 185.749333a21.333333 21.333333 0 0 1 30.165333-30.165333L512 481.834667 838.250667 155.584a21.333333 21.333333 0 0 1 30.165333 30.165333L542.165333 512l326.250667 326.250667a21.333333 21.333333 0 0 1-30.165333 30.165333L512 542.165333 185.749333 868.416a21.333333 21.333333 0 1 1-30.165333-30.165333L481.834667 512z" fill="#3D3D3D"></path></svg>
                     </div>
                     <div class="search-modal__list"></div>
                 </div>
@@ -217,8 +229,14 @@
     </div>
     <div class="desc">${item.desc}</div>
     <div class="tool">
-        <p>star:<span>${item.star}</span></p>
-        <p>fork:<span>${item.fork}</span></p>
+        <p>
+            <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4231" width="200" height="200"><path d="M793.6 972.8a25.4464 25.4464 0 0 1-12.2368-3.1232L512 822.784l-269.3632 146.8928a25.5488 25.5488 0 0 1-37.4784-26.7264l49.0496-294.1952-195.4816-195.4816a25.6512 25.6512 0 0 1 13.8752-43.3664l294.3488-49.0496 122.1632-244.3264a25.6 25.6 0 0 1 45.7728 0l122.1632 244.3264 294.3488 49.0496a25.6 25.6 0 0 1 13.8752 43.3664l-195.4816 195.4816 49.0496 294.1952A25.7536 25.7536 0 0 1 793.6 972.8zM512 768c4.1984 0 8.448 1.024 12.2368 3.1232l235.4688 128.4096-42.5472-255.3344a25.4464 25.4464 0 0 1 7.168-22.3232l169.6256-169.6256-258.1504-43.008a25.6 25.6 0 0 1-18.688-13.824L512 185.1904 406.8864 395.4176a25.7536 25.7536 0 0 1-18.688 13.824l-258.1504 43.008 169.6256 169.6256a25.7024 25.7024 0 0 1 7.168 22.3232l-42.5472 255.3344 235.4688-128.4096A25.4464 25.4464 0 0 1 512 768z" fill="" p-id="4232"></path></svg>
+            <span>${item.star}</span>
+        </p>
+        <p>
+            <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9550" width="200" height="200"><path d="M777.6 218.453333c0-49.493333-40.96-90.453333-91.306667-90.453333-50.346667 0-91.306667 40.96-91.306666 90.453333 0 37.546667 23.04 69.973333 56.32 83.626667-0.853333 15.36-10.24 110.933333-144.213334 159.573333-61.44 22.186667-107.52 52.053333-133.12 82.773334V302.08c34.133333-13.653333 54.613333-46.08 54.613334-83.626667 0-49.493333-41.813333-90.453333-92.16-90.453333-50.346667 0-89.6 40.96-89.6 90.453333 0 37.546667 23.893333 69.973333 58.026666 83.626667v419.84c-34.133333 13.653333-58.88 46.08-58.88 83.626667 0 49.493333 40.106667 90.453333 89.6 90.453333 50.346667 0 92.16-40.96 92.16-90.453333 0-37.546667-21.333333-69.973333-55.466666-83.626667v-27.306667c0-9.386667 4.266667-113.493333 156.16-168.96 180.906667-65.706667 189.44-206.506667 189.44-223.573333 36.693333-13.653333 59.733333-46.08 59.733333-83.626667z m-439.466667-39.253333c22.186667 0 39.253333 17.92 39.253334 39.253333s-17.92 39.253333-39.253334 39.253334c-22.186667 0-39.253333-17.92-39.253333-39.253334s17.066667-39.253333 39.253333-39.253333z m0 665.6c-22.186667 0-39.253333-17.92-39.253333-39.253333s17.92-39.253333 39.253333-39.253334c22.186667 0 39.253333 17.92 39.253334 39.253334s-17.92 39.253333-39.253334 39.253333z m348.16-587.093333c-22.186667 0-39.253333-17.92-39.253333-39.253334s17.92-39.253333 39.253333-39.253333c22.186667 0 39.253333 17.92 39.253334 39.253333s-17.066667 39.253333-39.253334 39.253334z" fill="#000000" p-id="9551"></path></svg>
+            <span>${item.fork}</span>
+        </p>
     </div>
 </div>`;
         }
@@ -243,12 +261,14 @@
             }
         }
         // 查询
+        let eventSource;
         function search(keyword) {
             if (!keyword.trim()) return;
-            const sse = new EventSource(`/search?keyword=${keyword}`);
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`/search?keyword=${keyword}`);
             const listNode = document.querySelector('.search-modal__list');
             let hasData = false;
-            sse.addEventListener('data', (e) => {
+            eventSource.addEventListener('data', (e) => {
                 if (!hasData) {
                     listNode.innerHTML = renderItem(JSON.parse(e.data));
                     hasData = true;
@@ -257,21 +277,31 @@
                     listNode.innerHTML += renderItem(JSON.parse(e.data));
                 }
             })
-            sse.addEventListener('done', () => {
+            eventSource.addEventListener('done', () => {
                 if (!hasData) {
                     listNode.innerHTML = renderEmpty();
                 }
-                sse.close()
+                eventSource.close()
             })
         }
         const debounceSearch = debounce(search, 500);
-        const input = document.querySelector('.search-modal__input');
+        const input = document.querySelector('.search-modal__input input');
+        const inputClear = document.querySelector('.search-modal__input .icon');
         const searchBtn = document.querySelector('.search');
         const searchModal = document.querySelector('#search-modal');
         const searchModalCloseBtn = document.querySelector('.search-modal__header .icon');
+        inputClear.addEventListener('click', () => {
+            input.value = '';
+            inputClear.style.display = 'none';
+        })
         input.addEventListener('input', e => {
             const value = e.target.value;
-            debounceSearch(value);
+            if (!value.trim()) {
+                inputClear.style.display = 'none';
+            } else {
+                inputClear.style.display = 'block';
+                debounceSearch(value);
+            }
         })
         searchBtn.addEventListener('click', e => {
             searchModal.style.display = 'block';

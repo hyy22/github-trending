@@ -17,6 +17,9 @@ from contextlib import asynccontextmanager
 EXEC_TIME = os.getenv("EXEC_TIME", "08:00")
 # 重试次数
 MAX_RETRY = int(os.getenv("MAX_RETRY", 10))
+# 输出目录
+DIST_DIR = "./dist"
+TRENDING_DIR = "./dist/trending"
 
 
 @asynccontextmanager
@@ -30,12 +33,12 @@ async def lifespan(app: FastAPI):
 # app
 app = FastAPI(lifespan=lifespan)
 # 静态资源
-app.mount("/trending", StaticFiles(directory="dist/trending"), name="trending")
+app.mount("/trending", StaticFiles(directory=TRENDING_DIR), name="trending")
 
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return HTMLResponse(content=open("dist/index.html").read(), status_code=200)
+    return HTMLResponse(content=open(f"{DIST_DIR}/index.html").read(), status_code=200)
 
 
 class TrendingItem(BaseModel):
@@ -47,9 +50,9 @@ class TrendingItem(BaseModel):
 
 
 def mapping_text(item: TrendingItem, keyword: str) -> Union[TrendingItem, None]:
-    if item["title"] and keyword in item["title"]:
+    if item["title"] and keyword.lower() in item["title"].lower():
         return item
-    if item["desc"] and keyword in item["desc"]:
+    if item["desc"] and keyword.lower() in item["desc"].lower():
         return item
     return None
 
@@ -58,10 +61,9 @@ def generate_result(keyword: str):
     if keyword == "" or keyword is None:
         yield "event:done\n\n"
     title_set: set[str] = set()
-    target_dir = "dist/trending"
-    files = os.listdir(target_dir)
+    files = os.listdir(TRENDING_DIR)
     for file in files:
-        with open(f"{target_dir}/{file}", "r", encoding="utf-8") as f:
+        with open(f"{TRENDING_DIR}/{file}", "r", encoding="utf-8") as f:
             data = json.load(f)
             for item in data:
                 if item["title"] in title_set:
@@ -105,7 +107,7 @@ def task():
             "fork": fork,
         })
     # 写入文件
-    path = f"./dist/trending/{datetime.now().strftime(format='%Y-%m-%d')}.json"
+    path = f"{TRENDING_DIR}/{datetime.now().strftime(format='%Y-%m-%d')}.json"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(json.dumps(projects, ensure_ascii=False))
@@ -129,9 +131,9 @@ def retry(func, n=10):
 def render():
     with open("./template.html", "r", encoding="utf-8") as f:
         data = f.read()
-        with open("./dist/index.html", "w", encoding="utf-8") as fw:
+        with open(f"{DIST_DIR}/index.html", "w", encoding="utf-8") as fw:
             # 日期渲染列表
-            date_list = sorted([date.split('.')[0] for date in os.listdir("./dist/trending")],
+            date_list = sorted([date.split('.')[0] for date in os.listdir(TRENDING_DIR)],
                                key=lambda x: datetime.strptime(x, '%Y-%m-%d'), reverse=True)
             date_div_list = [f'<div class="item">{date}</div>' for date in date_list]
             fw.write(Template(data).safe_substitute(date_div_list=''.join(date_div_list)))
