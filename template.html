@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover" />
-    <title>github热榜</title>
+    <meta name="description" content="github trending，github热榜归档" />
+    <meta name="keywords" content="github, trending, hot, repo, github hot, github hot repo, 热榜, github仓库趋势, github热点" />
+    <title>github trending | github热榜</title>
+    <link rel="icon" type="image/svg+xml" href="https://github.githubassets.com/favicons/favicon.svg">
     <style>
         * {
             margin: 0;
@@ -262,24 +265,39 @@
         }
         // 查询
         let eventSource;
+        // 任务调度
+        const listContainer = document.querySelector('.search-modal__list');
+        function renderTask({ str, isAdd }) {
+            if (!isAdd) {
+                listContainer.innerHTML = str;
+                listContainer.scrollTo(0, 0);
+            } else {
+                const dom = document.createElement('div');
+                dom.innerHTML = str;
+                listContainer.appendChild(dom);
+            }
+        }
+        const schedule = scheduleTask(renderTask);
         function search(keyword) {
             if (!keyword.trim()) return;
             if (eventSource) eventSource.close();
             eventSource = new EventSource(`/search?keyword=${keyword}`);
-            const listNode = document.querySelector('.search-modal__list');
+            schedule.clear();
             let hasData = false;
             eventSource.addEventListener('data', (e) => {
+                const data = JSON.parse(e.data);
+                const renderStr = renderItem(data);
                 if (!hasData) {
-                    listNode.innerHTML = renderItem(JSON.parse(e.data));
                     hasData = true;
+                    renderTask({ str: renderStr, isAdd: false });
                 }
                 else {
-                    listNode.innerHTML += renderItem(JSON.parse(e.data));
+                    schedule.add({ str: renderStr, isAdd: true });
                 }
             })
             eventSource.addEventListener('done', () => {
                 if (!hasData) {
-                    listNode.innerHTML = renderEmpty();
+                    listContainer.innerHTML = renderEmpty();
                 }
                 eventSource.close()
             })
@@ -312,6 +330,44 @@
         searchModalCloseBtn.addEventListener('click', e => {
             searchModal.style.display = 'none';
         })
+        /**
+         * 任务分片执行
+         */
+        function scheduleTask(task) {
+            let _queue = [];
+            let _isBusy = false;
+            // 新增任务
+            function add(items = []) {
+                const itemArray = Array.isArray(items) ? items : [items];
+                _queue.push(...itemArray);
+                // 何时执行
+                _run();
+            }
+            // 执行任务
+            function _run() {
+                if (_queue.length === 0 || _isBusy) return;
+                requestIdleCallback(idl => {
+                    while(idl.timeRemaining() > 0 && _queue.length > 0) {
+                        _isBusy = true;
+                        const arg = _queue.shift();
+                        task.call(this, arg)
+                    }
+                    if (_queue.length === 0) {
+                        _isBusy = false;
+                    }
+                    _run();
+                })
+            }
+            // 清空队列
+            function clear() {
+                _queue = [];
+                _isBusy = false;
+            }
+            return {
+                add,
+                clear
+            }
+        }
     </script>
 </body>
 </html>
