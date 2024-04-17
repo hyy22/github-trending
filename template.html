@@ -177,6 +177,9 @@
             color: #999;
             font-size: 16px;
         }
+        .loading {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -199,7 +202,7 @@
                 </div>
                 <div class="search-modal__content">
                     <div class="search-modal__input">
-                        <input id="search-input" type="text" placeholder="请输入关键词..." />
+                        <input type="text" placeholder="请输入关键词..." />
                         <svg style="display: none" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="M481.834667 512L155.584 185.749333a21.333333 21.333333 0 0 1 30.165333-30.165333L512 481.834667 838.250667 155.584a21.333333 21.333333 0 0 1 30.165333 30.165333L542.165333 512l326.250667 326.250667a21.333333 21.333333 0 0 1-30.165333 30.165333L512 542.165333 185.749333 868.416a21.333333 21.333333 0 1 1-30.165333-30.165333L481.834667 512z" fill="#3D3D3D"></path></svg>
                     </div>
                     <div class="search-modal__list"></div>
@@ -208,22 +211,48 @@
         </div>
     </div>
     <script>
+        /**
+         * 获取dom
+         */
+        // 侧边栏容器
+        const siderContainer = document.querySelector('.sider');
+        // 侧边栏项
         const siderItems = document.querySelectorAll('.sider .item');
+        // 右侧容器
+        const mainContainer = document.querySelector('.main');
+        // 搜索按钮
+        const searchBtn = document.querySelector('.search');
+        // 搜索弹窗
+        const searchModal = document.querySelector('#search-modal');
+        // 搜索弹窗关闭按钮
+        const searchModalCloseBtn = document.querySelector('.search-modal__header .icon');
+        // 搜索弹窗输入框
+        const searchInput = document.querySelector('.search-modal__input input');
+        // 搜索输入框清空按钮
+        const searchInputClearBtn = document.querySelector('.search-modal__input .icon');
+        // 搜索结果容器
+        const searchResultContainer = document.querySelector('.search-modal__list');
+        /**
+         * 操作
+         */
         // 选择日期
         function onClickDate(item) {
-            siderItems.forEach(v => v.classList.remove('active'))
+            if (item.classList.contains('active')) return;
+            siderItems.forEach(v => v.classList.remove('active'));
             item.classList.add('active');
             const date = item.textContent;
             renderProjectListByDate(date);
         }
-        onClickDate(siderItems[0])
-        // 绑定事件
-        const sider = document.querySelector('.sider')
-        sider.addEventListener('click', function(e) {
-            if (e.target.classList.contains('item')){
-               onClickDate(e.target)
-            }
-        })
+        async function renderProjectListByDate(date) {
+            mainContainer.innerHTML = renderLoading();
+            const resp = await fetch(`./trending/${date}.json`).then(res => res.json());
+            mainContainer.innerHTML = resp.map(v => renderItem(v)).join('\n');
+            mainContainer.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+            });
+        }
+        onClickDate(siderItems[0]);
         // 渲染项目列表
         function renderItem(item) {
             return `<div class="trending-item">
@@ -243,17 +272,13 @@
     </div>
 </div>`;
         }
+        // 渲染loading
+        function renderLoading() {
+            return `<div class="loading">加载中...</div>`;
+        }
+        // 渲染空状态
         function renderEmpty() {
             return `<div class="search-modal__list--empty">暂无数据</div>`;
-        }
-        async function renderProjectListByDate(date) {
-            const resp = await fetch(`./trending/${date}.json`).then(res => res.json())
-            const main = document.querySelector('.main');
-            main.innerHTML = resp.map(v => renderItem(v)).join('\n');
-            main.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
         }
         // 防抖
         function debounce(fn, delay = 200) {
@@ -263,76 +288,7 @@
                 timer = setTimeout(fn.bind(this, ...args), delay);
             }
         }
-        // 查询
-        let eventSource;
-        // 任务调度
-        const listContainer = document.querySelector('.search-modal__list');
-        function renderTask({ str, isAdd }) {
-            if (!isAdd) {
-                listContainer.innerHTML = str;
-                listContainer.scrollTo(0, 0);
-            } else {
-                const dom = document.createElement('div');
-                dom.innerHTML = str;
-                listContainer.appendChild(dom);
-            }
-        }
-        const schedule = scheduleTask(renderTask);
-        function search(keyword) {
-            if (!keyword.trim()) return;
-            if (eventSource) eventSource.close();
-            eventSource = new EventSource(`/search?keyword=${keyword}`);
-            schedule.clear();
-            let hasData = false;
-            eventSource.addEventListener('data', (e) => {
-                const data = JSON.parse(e.data);
-                const renderStr = renderItem(data);
-                if (!hasData) {
-                    hasData = true;
-                    renderTask({ str: renderStr, isAdd: false });
-                }
-                else {
-                    schedule.add({ str: renderStr, isAdd: true });
-                }
-            })
-            eventSource.addEventListener('done', () => {
-                if (!hasData) {
-                    listContainer.innerHTML = renderEmpty();
-                }
-                eventSource.close()
-            })
-        }
-        const debounceSearch = debounce(search, 500);
-        const input = document.querySelector('.search-modal__input input');
-        const inputClear = document.querySelector('.search-modal__input .icon');
-        const searchBtn = document.querySelector('.search');
-        const searchModal = document.querySelector('#search-modal');
-        const searchModalCloseBtn = document.querySelector('.search-modal__header .icon');
-        inputClear.addEventListener('click', () => {
-            input.value = '';
-            inputClear.style.display = 'none';
-        })
-        input.addEventListener('input', e => {
-            const value = e.target.value;
-            if (!value.trim()) {
-                inputClear.style.display = 'none';
-            } else {
-                inputClear.style.display = 'block';
-                debounceSearch(value);
-            }
-        })
-        searchBtn.addEventListener('click', e => {
-            searchModal.style.display = 'block';
-            setTimeout(() => {
-                input.focus();
-            }, 500);
-        })
-        searchModalCloseBtn.addEventListener('click', e => {
-            searchModal.style.display = 'none';
-        })
-        /**
-         * 任务分片执行
-         */
+        // 优化渲染性能
         function scheduleTask(task) {
             let _queue = [];
             let _isBusy = false;
@@ -341,16 +297,16 @@
                 const itemArray = Array.isArray(items) ? items : [items];
                 _queue.push(...itemArray);
                 // 何时执行
-                _run();
+                if (!_isBusy) _run();
             }
             // 执行任务
             function _run() {
-                if (_queue.length === 0 || _isBusy) return;
-                requestIdleCallback(idl => {
-                    while(idl.timeRemaining() > 0 && _queue.length > 0) {
+                if (_queue.length === 0) return;
+                requestIdleCallback(idle => {
+                    while(idle.timeRemaining() > 0 && _queue.length > 0) {
                         _isBusy = true;
                         const arg = _queue.shift();
-                        task.call(this, arg)
+                        task.call(this, arg);
                     }
                     if (_queue.length === 0) {
                         _isBusy = false;
@@ -366,8 +322,77 @@
             return {
                 add,
                 clear
+            };
+        }
+        function renderTask({ content, isAdd = false }) {
+            if (!isAdd) {
+                searchResultContainer.innerHTML = content;
+                searchResultContainer.scrollTo(0, 0);
+            } else {
+                const dom = document.createElement('div');
+                dom.innerHTML = content;
+                searchResultContainer.appendChild(dom);
             }
         }
+        const schedule = scheduleTask(renderTask);
+        // 查询
+        let eventSource;
+        function search(keyword) {
+            if (!keyword.trim()) return;
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`/search?keyword=${keyword}`);
+            schedule.clear();
+            let hasData = false;
+            searchResultContainer.innerHTML = renderLoading();
+            eventSource.addEventListener('data', (e) => {
+                const data = JSON.parse(e.data);
+                const renderStr = renderItem(data);
+                if (!hasData) {
+                    hasData = true;
+                    renderTask({ content: renderStr, isAdd: false });
+                }
+                else {
+                    schedule.add({ content: renderStr, isAdd: true });
+                }
+            })
+            eventSource.addEventListener('done', () => {
+                if (!hasData) {
+                    searchResultContainer.innerHTML = renderEmpty();
+                }
+                eventSource.close();
+            })
+        }
+        const debounceSearch = debounce(search, 500);
+        /**
+         * 事件绑定
+         */
+        siderContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('item')){
+               onClickDate(e.target);
+            }
+        });
+        searchBtn.addEventListener('click', () => {
+            searchModal.style.display = 'block';
+            setTimeout(() => {
+                searchInput.focus();
+            }, 500);
+        });
+        searchModalCloseBtn.addEventListener('click', () => {
+            searchModal.style.display = 'none';
+        });
+        searchInput.addEventListener('input', e => {
+            const value = e.target.value;
+            if (!value.trim()) {
+                searchInputClearBtn.style.display = 'none';
+            } else {
+                searchInputClearBtn.style.display = 'block';
+                debounceSearch(value);
+            }
+        });
+        searchInputClearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchInputClearBtn.style.display = 'none';
+        });
     </script>
 </body>
 </html>
