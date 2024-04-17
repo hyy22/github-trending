@@ -300,6 +300,23 @@
                 if (!_isBusy) _run();
             }
             // 执行任务
+            if (!window.requestIdleCallback) {
+                window.requestIdleCallback = cb => {
+                    let start = performance.now();
+                    requestAnimationFrame(function _check(time) {
+                        const remain = 16.6 - (time - start);
+                        if (remain > 0) {
+                            cb({
+                                didTimeout: false,
+                                timeRemaining: () => remain,
+                            });
+                        } else {
+                            start = time;
+                            requestAnimationFrame(_check);
+                        }
+                    })
+                }
+            }
             function _run() {
                 if (_queue.length === 0) return;
                 requestIdleCallback(idle => {
