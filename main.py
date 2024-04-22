@@ -47,6 +47,8 @@ class TrendingItem(BaseModel):
     desc: str
     star: str
     fork: str
+    lang: str
+    today_star: str
 
 
 def mapping_text(item: TrendingItem, keyword: str) -> Union[TrendingItem, None]:
@@ -95,16 +97,21 @@ def task():
         title = row.find(".Box-row>h2", first=True).text
         link = row.find(".Box-row>h2>a", first=True).attrs["href"]
         desc_element = row.find(".Box-row>p", first=True)
-        desc = '' if desc_element is None else desc_element.text
+        desc = "" if desc_element is None else desc_element.text
         wrapper = row.find(".Box-row>div:last-child>a")
         star = wrapper[0].text
         fork = wrapper[1].text
+        lang_wrapper = row.find(".Box-row>div .repo-language-color+span", first=True)
+        lang = "" if lang_wrapper is None else lang_wrapper.text
+        today_star = row.find(".Box-row>div:last-child>span:last-child", first=True).text
         projects.append({
             "title": title,
             "link": link,
             "desc": desc,
             "star": star,
             "fork": fork,
+            "lang": lang,
+            "today_star": today_star.split(" ")[0]
         })
     # 写入文件
     path = f"{TRENDING_DIR}/{datetime.now().strftime(format='%Y-%m-%d')}.json"
